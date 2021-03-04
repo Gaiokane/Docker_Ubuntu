@@ -233,6 +233,8 @@ user.save!
 
 <h2 id="3-2">3.2 配置GitLab</h2>
 
+> [参考链接](https://docs.gitlab.com/ "点击打开")
+
 ### 3.2.1 修改语言
 
 1.登录进GitLab
@@ -251,7 +253,52 @@ user.save!
 
 <h2 id="4-1">4.1 安装Registry</h2>
 
-> [参考链接](https:// "点击打开")
+> [参考链接](https://docs.docker.com/registry/deploying/ "点击打开")
+> 
+> [参考链接](https://docs.docker.com/registry/deploying/#deploy-your-registry-using-a-compose-file "点击打开")
+> 
+> [参考链接](https://www.cnblogs.com/edisonchou/p/docker_registry_repository_setup_introduction.html "点击打开")
+> 
+> [参考链接](https://www.cnblogs.com/zhaojiankai/p/7813969.html "点击打开")
+
+````
+#下载镜像（当前版本26.2M，无须提前下载）
+sudo docker pull registry:latest
+
+#新建相应目录
+sudo mkdir -p /dockeruse/registry/data
+sudo mkdir -p /dockeruse/registry/certs
+sudo mkdir -p /dockeruse/registry/auth
+
+#生成证书
+sudo openssl req -newkey rsa:4096 -nodes -sha256 -keyout /dockeruse/registry/certs/domain.key -x509 -days 365 -out /dockeruse/registry/certs/domain.crt
+
+#在docker中创建
+sudo docker secret create registry_domain.crt certs/domain.crt
+sudo docker secret create registry_domain.key certs/domain.key
+
+#新建stack，粘贴以下
+version: "3"
+services:
+  registry:
+      restart: always
+      image: registry:latest
+      ports:
+        - 32000:5000
+      environment:
+        REGISTRY_HTTP_TLS_CERTIFICATE: /certs/domain.crt
+        REGISTRY_HTTP_TLS_KEY: /certs/domain.key
+        #REGISTRY_AUTH: htpasswd
+        #REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+        #REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+      volumes:
+        - /dockeruse/registry/data:/var/lib/registry
+        - /dockeruse/registry/certs:/certs
+        - /dockeruse/registry/auth:/auth
+
+#启动，通过https://ip:32000/v2/_catalog访问
+#响应{"repositories":[]}
+````
 
 [返回目录](#home)
 
